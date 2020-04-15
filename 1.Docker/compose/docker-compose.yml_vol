@@ -1,0 +1,18 @@
+version: "2.4"
+services:
+  web:
+    build: .
+    ports:
+      - "80:5000"
+    volumes:
+      - .:/code
+    environment:
+      FLASK_ENV: development
+  redis:
+    image: "redis:alpine"
+    volumes:
+      - type: volume
+        source: mydata
+        target: /data
+volumes:
+  mydata:
