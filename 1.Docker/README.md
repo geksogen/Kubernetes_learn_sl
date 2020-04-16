@@ -20,10 +20,10 @@ echo $$
 ps aux | grep номер_пида
 ```
  
-2) Смотрим какие текущие *namespaces* есть в системе через `lnls`. Знакомимся с утилитой `unshare`
+2) Смотрим какие текущие *namespaces* есть в системе через `lsln`. Знакомимся с утилитой `unshare`
 
 ```
-lnls
+lsln
 unshare --help
 ```
 
@@ -43,7 +43,7 @@ hostname <--- в консоли №2
 hostname <--- в консоли №1
 ```
 
-5) В **консоли №1** выполняем команду `lnls` и видим новый *namespace* созданный нами с процессом *bash*:
+5) В **консоли №1** выполняем команду `lsln` и видим новый *namespace* созданный нами с процессом *bash*:
 
 6) Выходим из запущенной ранее оболочки bash на **консоли №2**. Смотрим текущие процессы **консоли №2** и сетевое окружение
 
@@ -74,9 +74,9 @@ yum-config-manager \
     --add-repo \
     https://download.docker.com/linux/centos/docker-ce.repo
 
-yum install docker-ce docker-ce-cli containerd.io
+yum install -y docker-ce docker-ce-cli containerd.io
 
-systemctl status docker && systemctl start docker
+systemctl enable --now docker && systemctl status docker
 ```
 
 10) Убеждаемся что все ОК. Посмотрим запущеные контейнеры. Так как мы ничего не запускали, команда выведет пустую табличку:
