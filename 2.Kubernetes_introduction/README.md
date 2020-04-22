@@ -4,354 +4,188 @@
 
 Где `sXXXXXX` - это номер вашего имени пользователя. Учетные данные доступны в [личном кабинете](https://edu.slurm.io/profile)
 
-2) Подключившись к sbox, далее подключаемся к своей площадке `ssh docker.sXXXXXX`
+2) Подключившись к sbox, проверяем что есть подключение к кластеру, выполнив `kubectl get pod`
 
-3) Делаем `sudo -s`, так как будем работать под рутом
+3) Сообщение `No resources found in sXXXXXX namespace.` говорит что все работает
+
+4) Клонируем себе репозиторий: `cd ~ && git clone git@gitlab.slurm.io:school/slurm.git`
 
 ### Закрепляем знания по Pod и Replicaset
 
-1) Смотрим PID своей оболочки *bash* и его *namespaces*:
+1) Переходим в каталог с практикой, смотрим файл `pod.yaml` и запускаем его
 
 ```
-ls -l /proc/$$/ns
-echo $$
-ps aux | grep номер_пида
+cd slurm/2.Kubernetes_introduction/
+cat pod.yaml
+kubectl create -f pod.yaml
 ```
  
-2) Смотрим какие текущие *namespaces* есть в системе через `lsns`. Знакомимся с утилитой `unshare`
+2) Проверяем что наш pod действительно стартанул:
 
 ```
-lsns
-unshare --help
+kubectl get po
 ```
 
-3) **В консоли №2** отделяем процесс *bash* в отдельный *UTS namespace* и смотрим что он действительно изменился 
+3) Посмотрим описание этого pod'а, статус и его events:
 
 ```
-unshare -u bash
-ls -l /proc/$$/ns <--- в обоих консолях
+kubectl describe pod my-pod
 ```
 
-4) Изменим hostname в **консоли №2** , и проверим что в консоли №1 он не поменялся:
+4) Посмотрим на наш replicaset, запустим его:
 
 ```
-hostname testhost <--- в консоли №2
-hostname <--- в консоли №2
-
-hostname <--- в консоли №1
+cat replicaset.yaml
+kubectl create -f replicaset.yaml
 ```
 
-5) В **консоли №1** выполняем команду `lsns` и видим новый *namespace* созданный нами с процессом *bash*:
-
-6) Выходим из запущенной ранее оболочки bash на **консоли №2**. Смотрим текущие процессы **консоли №2** и сетевое окружение
+5) Обратите внимание, что теперь и pod и replicaset работают:
 
 ```
-exit
-ps aux
-ip a 
+kubectl get po
+kubectl get rs
 ```
 
-7) В **консоли №2** поместим теперь процесс *bash* в несколько *namespace'ов*:
-
-`unshare --pid --net --fork --mount-proc /bin/bash`
-
-8) Снова смотрим в **консоли №2** процессы и сетевое окружение. Видим что наш *bash* изолирован. Затем выходим из запущенного *bash*:
+6) Увеличим количество реплик нашего replicaset до 3, убедимся что все сработало:
 
 ```
-ps aux
-ip a
-exit
+kubectl scale replicaset my-replicaset --replicas=3
+
+kubectl get po
+kubectl get rs
 ```
 
-9) Устанавливаем *Docker*:
+**САМОСТОЯТЕЛЬНАЯ РАБОТА:**
+
+- Уменьшить количество реплик запущенного replicaset до 2 НЕ используя `kubectl scale`
+
+7) Прибираемся за собой
 
 ```
-yum install -y yum-utils
-
-yum-config-manager \
-    --add-repo \
-    https://download.docker.com/linux/centos/docker-ce.repo
-
-yum install -y docker-ce docker-ce-cli containerd.io
-
-systemctl enable --now docker && systemctl status docker
+kubectl delete all --all
 ```
 
-10) Убеждаемся что все ОК. Посмотрим запущеные контейнеры. Так как мы ничего не запускали, команда выведет пустую табличку:
+---
 
-`docker ps`
+### Закрепляем знания по Deployment
 
-11) Соберем наш первый образ на базе *Alpine*, который будет пинговать *8.8.8.8*:
-
-```
-docker build -t test  -<<EOF
-
-FROM alpine
-ENTRYPOINT ["ping"]
-
-CMD ["8.8.8.8"]
-
-EOF
-```
-
-12) Запустим контейнер из собранного образа: `docker run --name test --rm -d test`
-
-13) Посмотрим какие *namespace* создал *Docker*, запомним *PID* процесса нашего контейнера:
-
-`lsns`
-
-14) Войдем внутрь контейнера, проверим запущенные процессы и сетевое окружение. Затем выйдем:
+1) Смотрим на `deployment.yaml`, НО НЕ ЗАПУСКАЕМ ПОКА ЧТО
 
 ```
-docker exec -it test /bin/sh
-ps aux
-ip a
-exit
+cat deployment.yaml
 ```
 
-15) Теперь воспользуемся утилитой *nsenter* чтобы подключиться к *namespace'ам* этого контейнера. Используем номер *PID* этого контейнера:
+**САМОСТОЯТЕЛЬНАЯ РАБОТА:**
 
-`nsenter -t номер_пида --pid --net --mount --ipc --uts sh`
+- Запустить Deployment с image=nginx:1.13
+- У этого деплоймента должно быть 6 реплик
+- Этот деплоймент должен при обновлении увеличивать количество новых реплик на 2
+- Этот деплоймент должен при обновлении уменьшать количество старых реплик на 2
 
-16) Убедимся что мы видим тоже самое окружение как если бы использовали *docker exec*:
-
-```
-ps aux
-ip a
-exit
-```
-
-17) Соберем еще один образ:
+2) Обновляем версию нашего деплоймента до nginx:1.14 и сразу смотрим как проходит процесс обновления:
 
 ```
-docker build -t test_resource  -<<EOF
-
-FROM alpine
-ENTRYPOINT ["sleep"]
-
-CMD ["3600"]
-
-EOF
+kubectl set image deployment my-deployment '*=nginx:1.14'
+kubectl get po -w
 ```
 
-18) Запустим контейнер из этого образа, но наложим на него ограничения по ресурсам в *100Мб ОЗУ* и *0,2 CPU*:
-
-`docker run --name test_resource --memory=100m --cpus=".2" --rm -d test_resource`
-
-19) Воспользуемся утилитой `systemd-cgls` чтобы посмотреть текущие *cgroups*. Находим там *SHA* нашего контейнера и идем в папку его *cgroup* по памяти:
+3) Удалим наш deployment:
 
 ```
-systemd-cgls <--- находим тут SHA нашего контейнера
-
-cd /sys/fs/cgroup/memory/docker/SHA_контейнера
+kubectl delete deployment my-deployment
 ```
 
-20) Убеждаемся что в cgroup контейнера действительно есть заданные ограничения:
+---
 
-`cat memory.limit_in_bytes | awk '{$1=$1/1024/1024; print}'`
+### Закрепляем знания по resources
 
-21) Убеждаемся что наш процесс действительно в этой *cgroup*:
-
-`cat tasks`
-
-22) Проверим ограничения по *CPU*: 
-
-`cd /sys/fs/cgroup/cpu/docker/SHA_контейнера`
-
-23) Смотрим что ограничения есть:
-
-`cat cpu.cfs_quota_us`
-
-24) Ставим *libcgroup* 
-
-`yum install libcgroup-tools -y`
-
-25) Посмотрим *cgroups* нашего контейнера через утилиту от *libcgroup*:
-
-`cgget docker/SHA_контейнера`
-
-26) Через передачу ключа `-r` можно посмотреть конкретный параметр *cgroup'ы*:
-
-`cgget -r memory.limit_in_bytes docker/SHA_контейнера`
-
-**САМОСТОЯТЕЛЬНАЯ РАБОТА:** 
-
-- Запустить контейнер с именем test_limit из образа test_resource с ограничением в 200 Мб ОЗУ и 0,5 CPU 
-- Получить через утилиту cgget значения memory.limit_in_bytes и cpu.cfs_quota_us этого контейнера
-- Они должны быть равны 209715200 и 50000 соответственно. 
-
-27) Останавливаем запущенные ранее контейнеры `docker stop $(docker ps -q)` и можно закрыть **консоль №2**
-
---------------
-
-### Закрепляем тему Docker Volume
-
-1) Соберем образ с *Redis*, который использует *volume*:
+1) Посмотрим на `deployment-with-stuff.yaml` и запустим его:
 
 ```
-docker build -t redis_1  -<<EOF
-
-FROM redis
-VOLUME /data
-
-EOF
+cat deployment-with-stuff.yaml
+kubectl create -f deployment-with-stuff.yaml
 ```
 
-2) Запустим контейнер и посмотрим какие *volume'ы* есть:
+2) Посмотрим `describe` этого deployment,увидим его Requests и Limits:
 
 ```
-docker run --rm -d --name redis_1 redis_1
-
-docker volume ls
+kubectl describe deployments.apps my-deployment
 ```
 
-3) Нас не устраивает имя *volume*. Остановим контейнер командой `docker stop redis_1`
-
-4) Запустим снова контейнер из этого образа, но передам параметры подключения *volume*:
-
-`docker run --rm --name redis_1 -d --mount type=volume,source=data,destination=/data redis_1`
-
-5) Смотрим теперь список volume'ов, смотрим его физическое расположение на хосте:
+3) Обратим внимание на QoS класс запущенных подов deployment'а:
 
 ```
-docker volume ls
-
-ll /var/lib/docker/volumes/data/_data/
+kubectl describe po my-deployment-XXXXXXXXXX-YYYYY | grep QoS
 ```
 
-6) Зайдем внутрь контейнера, создадим там ключ, запишем его в *Redis*, убедимся что rbd файлик создался и выйдем:
+---
+
+### Закрепляем знания по probes
+
+1) Снова посмотрим файл ранее запущенного нами deployment'а `deployment-with-stuff.yaml`:
 
 ```
-docker exec -it redis_1 bash
-
-redis-cli
-
-set mykey foobar
-get mykey
-save
-exit
-
-ls
-exit
+cat deployment-with-stuff.yaml
 ```
 
-7) Посмотрим физическое содержание папки нашего *volume*:
-
-`ls /var/lib/docker/volumes/data/_data/`
-
-8) Остановим наш контейнер и проверим доступность *volume*:
+2) Обновим наш deployment. Для этого изменим в файле `deployment-with-stuff.yaml` поле `- image: nginx:1.12` на `- image: nginx:1.13`. Применяем и смотрим как происходит обновление: 
 
 ```
-docker stop redis_1
-
-docker volume ls
+kubectl apply -f deployment-with-stuff.yaml
+kubectl get po -w
 ```
 
-9) Запустим снова наш контейнер и убедимся что наш созданный ключ не пропал:
+3) Повторим все тоже самое, но теперь изменим в файле `deployment-with-stuff.yaml` поле `- image: nginx:1.13` на `- image: nginx:1.14`. Применяем и смотрим какие replicaset'ы есть:
 
 ```
-docker run --rm --name redis_1 -d --mount type=volume,source=data,destination=/data redis_1
-
-docker exec -it redis_1 bash
-
-redis-cli
-
-get mykey
-exit
-
-exit
+kubectl apply -f deployment-with-stuff.yaml
+kubectl get po -w
+kubectl get rs
 ```
 
-**САМОСТОЯТЕЛЬНАЯ РАБОТА:** 
-
-- Запустите контейнер с именем redis_2 из образа redis_1 который будет использовать тот же самый volume
-- Для проверки что все получилось зайдите внутрь контейнера redis_2 и в redis_cli и выполните "get mykey"
-- Если вы все сделали верно, то отдастся значение foobar.
-
-10) Прибираемся за собой:
+4) Представим что в коде последних двух версий обнаружили баг, нам нужно откатиться обратно на старый образ `nginx:1.12`. Можно поменять в файле, а можно воспользоваться командой:
 
 ```
-docker stop $(docker ps -q)
-
-docker volume ls
-
-docker volume rm data
+kubectl rollout undo deployment my-deployment --to-revision=1
 ```
 
-
-------
-
-### Закрепляем тему Docker Compose
-
-1) Устанавливаем *Docker-compose*:
+5) Проверим текущий image нашего deployment:
 
 ```
-yum install docker-compose -y
-
-docker-compose version
+kubectl describe deployments.apps my-deployment | grep Image
 ```
 
-2) Клонируем себе репозиторий с практикой:
+6) Удаляем deployment
 
 ```
-cd /srv
-git clone git@gitlab.slurm.io:school/slurm.git
+kubectl delete deployment my-deployment
 ```
 
-3) Переходим в каталог с практикой:
-
-`cd /srv/slurm/1.Docker/compose`
-
-4) Запустим наш проект. Это приложение на *Python/Flask*, которое считает количество обращений к нему:
+7) Смотрим на файл `deployment-startup-probe.yaml`, попробуем его применить:
 
 ```
-docker-compose up -d
+cat deployment-startup-probe.yaml
 
-curl 127.0.0.1 пару раз
+kubectl create -f deployment-startup-probe.yam
 ```
 
-5) Смотрим наши *volume'ы* и видим что снова непонятное имя:
-
-`docker volume ls`
-
-6) Останавливаем проект, удаляем *volume*, смотрим соседний файл *compose'а*:
+8) Посмотрим его describe и видим что там только две пробы, так как на 1.16 версии kubernetes `StartupProbe` в Alpha версии:
 
 ```
-docker-compose down
-docker volume rm имя_volume'а
-
-cat docker-compose.yml_vol
+kubectl describe deployments.apps my-deployment
 ```
 
-7) Запускаем проект из этого файла:
-
-`docker-compose -f docker-compose.yml_vol up -d `
-
-8) Проверим что наши данные о посещении сохраняются. Сделаем пару обращений к приложению, затем остановим его, снова поднимем и снова сделаем пару обращений:
+9) Прибираем за собой: 
 
 ```
-curl 127.0.0.1 пару раз
-docker-compose down
-
-docker-compose -f docker-compose.yml_vol up -d
-curl 127.0.0.1 пару раз
+kubectl delete all --all
 ```
 
-10) Погасим наше приложение: `docker-compose down`
+**ДОМАШНЯЯ РАБОТА:**
 
-**САМОСТОЯТЕЛЬНАЯ РАБОТА:** 
+- Запустить deployment из файла `bad_deployment.yaml`
+- Понять почему pod'ы не становятся в статус Running и исправить это
+- Пофиксить все остальные проблемы
+- Как итог, все поды должны быть в статусе Running и в READY 1/1
 
-- Запустить это же приложение, но с *healthcheck'ом* сервиса *redis'а* через команду `redis-cli ping`
-- Старт сервиса *web* сделать зависимым от здоровья сервиса *redis*
-- Также ограничить через *compose-файл* сервису *redis* *RAM до 500 МБ и CPU до 0,5*
-- Проверить что все получилось можно сделав после запуска и получив значения:
-
-```
-docker inspect compose_redis_1 | grep "Memory\|NanoCpus"
-
-            "Memory": 524288000,
-            "NanoCpus": 500000000,
-```
-
-- либо использовав для проверки утилиту cgget.
-- Готовый файл для этой самостоятельной работы лежит в этом же репозитории и называется `docker-compose.yml_dz`. Можно использовать как шпаргалку
+*Ответ-шпаргалка в `bad_deployment.yaml_otvet`*
