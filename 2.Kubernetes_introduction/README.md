@@ -82,7 +82,7 @@ cat deployment.yaml
 - Этот деплоймент должен при обновлении увеличивать количество новых реплик на 2
 - Этот деплоймент должен при обновлении уменьшать количество старых реплик на 2
 
-2) Обновляем версию нашего деплоймента до nginx:1.14 и сразу смотрим как проходит процесс обновления:
+2) Обновляем версию нашего деплоймента до nginx:1.14 и сразу смотрим, как проходит процесс обновления:
 
 ```
 kubectl set image deployment my-deployment '*=nginx:1.14'
@@ -106,7 +106,7 @@ cat deployment-with-stuff.yaml
 kubectl create -f deployment-with-stuff.yaml
 ```
 
-2) Посмотрим `describe` этого deployment,увидим его Requests и Limits:
+2) Посмотрим `describe` этого deployment, увидим его Requests и Limits:
 
 ```
 kubectl describe deployments.apps my-deployment
@@ -128,14 +128,14 @@ kubectl describe po my-deployment-XXXXXXXXXX-YYYYY | grep QoS
 cat deployment-with-stuff.yaml
 ```
 
-2) Обновим наш deployment. Для этого изменим в файле `deployment-with-stuff.yaml` поле `- image: nginx:1.12` на `- image: nginx:1.13`. Применяем и смотрим как происходит обновление: 
+2) Обновим наш deployment. Для этого изменим в файле `deployment-with-stuff.yaml` поле `- image: nginx:1.12` на `- image: nginx:1.13`. Применяем и смотрим, как происходит обновление: 
 
 ```
 kubectl apply -f deployment-with-stuff.yaml
 kubectl get po -w
 ```
 
-3) Повторим все тоже самое, но теперь изменим в файле `deployment-with-stuff.yaml` поле `- image: nginx:1.13` на `- image: nginx:1.14`. Применяем и смотрим какие replicaset'ы есть:
+3) Повторим все тоже самое, но теперь изменим в файле `deployment-with-stuff.yaml` поле `- image: nginx:1.13` на `- image: nginx:1.14`. Применяем и смотрим, какие replicaset'ы есть:
 
 ```
 kubectl apply -f deployment-with-stuff.yaml
@@ -143,13 +143,13 @@ kubectl get po -w
 kubectl get rs
 ```
 
-4) Представим что в коде последних двух версий обнаружили баг, нам нужно откатиться обратно на старый образ `nginx:1.12`. Можно поменять в файле, а можно воспользоваться командой:
+4) Представим, что в коде последних двух версий обнаружили баг, нам нужно откатиться обратно на старый образ `nginx:1.12`. Можно поменять в файле, а можно воспользоваться командой:
 
 ```
 kubectl rollout undo deployment my-deployment --to-revision=1
 ```
 
-5) Проверим текущий image нашего deployment:
+5) Проверим текущий image нашего deployment'a:
 
 ```
 kubectl describe deployments.apps my-deployment | grep Image
@@ -166,10 +166,10 @@ kubectl delete deployment my-deployment
 ```
 cat deployment-startup-probe.yaml
 
-kubectl create -f deployment-startup-probe.yam
+kubectl create -f deployment-startup-probe.yaml
 ```
 
-8) Посмотрим его describe и видим что там только две пробы, так как на 1.16 версии kubernetes `StartupProbe` в Alpha версии:
+8) Посмотрим его describe и видим, что там только две пробы, так как на 1.16 версии kubernetes `StartupProbe` в Alpha версии:
 
 ```
 kubectl describe deployments.apps my-deployment
