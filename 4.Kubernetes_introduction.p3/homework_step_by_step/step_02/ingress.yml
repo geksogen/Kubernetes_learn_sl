@@ -1,0 +1,13 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: app
+spec:
+  rules:
+  - host: s<номер_студента>.k8s.slurm.io
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: app
+          servicePort: 80
