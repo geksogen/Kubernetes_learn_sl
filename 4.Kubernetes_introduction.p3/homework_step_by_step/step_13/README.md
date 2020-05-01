@@ -11,7 +11,7 @@
 vi ingress.yml
 
 kubectl apply -f ingress.yml
-kubectl apply -f ingress_2.yml
+kubectl apply -f ingress-2.yml
 
 curl s<номер_студента>.k8s.slurm.io/app
 curl s<номер_студента>.k8s.slurm.io/sec
