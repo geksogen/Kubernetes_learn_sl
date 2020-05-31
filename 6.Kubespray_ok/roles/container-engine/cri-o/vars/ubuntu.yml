@@ -1,0 +1,6 @@
+---
+
+crio_packages:
+  - "cri-o-{{ crio_version }}"
+
+crio_runc_path: /usr/lib/cri-o-runc/sbin/runc

@@ -1,0 +1,30 @@
+wap
+sudo swapoff -a
+
+Отключаем Firewol
+sudo firewall-cmd --state
+sudo systemctl stop firewalld
+systemctl disable firewalld
+
+Устанавливаем Git и MC
+sudo yum install git
+sudo yum install mc
+
+Устанавливаем PIP
+curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+python get-pip.py
+
+Ансибиль
+sudo yum install epel-release
+sudo yum install ansible
+
+pip install --ignore-installed requests==2.23.0
+pip install -r requirements.txt
+
+git clone https://github.com/southbridgeio/kubespray
+pip install -r requirements.txt
+
+
+Настраиваем переменные в kubespray. имена оставляем
+
+изменил True в rolle
