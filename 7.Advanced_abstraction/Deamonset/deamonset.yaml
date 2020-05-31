@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    run: node-name
+  name: node-name
+spec:
+  selector:
+    matchLabels:
+      run: node-name
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        run: node-name
+    spec:
+      tolerations:
+      - effect: "NoSchedule"
+        operator: Exists
+      containers:
+      - image: k8s.gcr.io/busybox
+        name: node-name
+        command: [ "sh", "-c"]
+        args:
+        - while true; do
+            echo -en '\n';
+            printenv MY_NODE_NAME MY_POD_NAME ;
+            sleep 15;
+          done;
+        env:
+        - name: MY_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: MY_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
