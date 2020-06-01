@@ -1,4 +1,7 @@
-wap
+3.10.0-957.el7.x86_64 Rhal
+kernel v 3
+
+Отключаем swap
 sudo swapoff -a
 
 Отключаем Firewol
@@ -14,17 +17,25 @@ sudo yum install mc
 curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
 python get-pip.py
 
-Ансибиль
-sudo yum install epel-release
-sudo yum install ansible
-
-pip install --ignore-installed requests==2.23.0
-pip install -r requirements.txt
 
 git clone https://github.com/southbridgeio/kubespray
+pip install --ignore-installed requests==2.23.0
 pip install -r requirements.txt
 
 
 Настраиваем переменные в kubespray. имена оставляем
 
-изменил True в rolle
+1) inventory 
+2) group_vars/k8s-cluster/k8s-cluster.yaml
+3) group_vars/k8s-cluster/k8s-flannel.yaml
+4) roles/kubernetes/secrets/secrets/tasks/check-cert.yml	sync_certs: true
+5) _deploy_cluster.sh меняем путь до инвентаря
+
+
+ssh-keygen
+ssh-copy-id root@remote_host
+
+sh _deplouy_cluster.sh root
+
+удаление кластера
+ansible-playbook -i inventory/root/inventory.ini reset.yml
