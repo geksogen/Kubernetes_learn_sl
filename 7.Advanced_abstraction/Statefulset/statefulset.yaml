@@ -14,6 +14,15 @@ spec:
       labels:
         app: base
     spec:
+      initContainers:
+      - image: k8s.gcr.io/busybox
+        name: touch-file
+        command: [ "sh", "-c"]
+        args:
+          - touch "/data/$(hostname).$(date)"
+        volumeMounts:
+        - name: data
+          mountPath: /data
       containers:
       - image: k8s.gcr.io/busybox
         name: node-name
