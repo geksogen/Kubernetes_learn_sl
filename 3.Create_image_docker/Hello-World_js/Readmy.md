@@ -10,5 +10,11 @@ Push registry
 Запуск контейнера из registry 
  docker run -p 5000:5000 geksogen/learn_images:test
 
+Под для тестирования
+kubectl run -t -i --rm --image amouat/network-utils test bash
+
+Проверка <IP Kubernetes services>
+curl 10.100.84.84:500 /
+
 
 https://www.magalix.com/blog/demystifying-docker-kubernetes-for-your-organization 
