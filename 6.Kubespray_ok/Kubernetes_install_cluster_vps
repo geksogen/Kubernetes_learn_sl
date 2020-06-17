@@ -4,7 +4,7 @@ kernel v 3
 Отключаем swap
 sudo swapoff -a
 
-Отключаем Firewol
+Отключаем Firewol на всех узлах кластера
 sudo firewall-cmd --state
 sudo systemctl stop firewalld
 systemctl disable firewalld
