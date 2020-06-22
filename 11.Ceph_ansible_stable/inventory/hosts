@@ -1,0 +1,22 @@
+[clients]
+master-1
+
+[mons]
+ingress-1 monitor_address=192.168.0.4
+node-1 monitor_address=192.168.0.5
+node-2 monitor_address=192.168.0.6
+
+[osds]
+ingress-1
+node-1
+node-2
+
+[mgrs]
+ingress-1
+node-1
+node-2
+
+[mdss]
+ingress-1
+node-1
+node-2

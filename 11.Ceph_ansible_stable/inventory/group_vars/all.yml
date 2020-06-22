@@ -1,0 +1,19 @@
+ceph_origin: repository
+ceph_repository: community
+ceph_stable_release: octopus
+public_network: "192.168.0.0/24"
+cluster_network: "192.168.0.0/24"
+
+ntp_service_enabled: true
+ntp_daemon_type: ntpd
+
+osd_objectstore: bluestore
+#devices:
+#  - /dev/vdb
+
+lvm_volumes:
+  - data: /dev/vdb
+
+ansible_python_interpreter: /usr/bin/python
+dashboard_enabled: False
+osd_memory_target: 939524096
