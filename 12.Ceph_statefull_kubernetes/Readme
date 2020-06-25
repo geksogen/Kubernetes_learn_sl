@@ -1,0 +1,144 @@
+***
+На Ceph кластерере
+
+Создаем pool
+ceph osd pool create kube 8 8
+
+Создаем клиента и ключ client_key
+ceph auth add client.kube mon 'allow r' osd 'allow rwx pool=kube'
+ceph auth get-key client.kube
+AQDMgvRet08zKRAAq2ORkDDyC99RHvf96V0+ew==
+
+Создаем ключ admin_key
+ceph auth get client.admin 2>&1 |grep "key = " |awk '{print  $3'}
+AQD9zu9ePGYqLhAAUV7aHgdETMxJv6ncrLsFow==
+
+***
+На Kubernetes кластере
+
+Создадим файл с клиентским токеном client который мы получили
+echo AQDMgvRet08zKRAAq2ORkDDyC99RHvf96V0+ew== > /tmp/key.client
+
+Создаем секрет client
+kubectl create secret generic ceph-secret --from-file=/tmp/key.client --namespace=kube-system --type=kubernetes.io/rbd
+
+Создаем файл с admin токеном
+echo AQD9zu9ePGYqLhAAUV7aHgdETMxJv6ncrLsFow== > /tmp/key.admin
+
+Деплой ceph rbd provisioner
+
+git clone https://github.com/kubernetes-incubator/external-storage.git
+cd external-storage/ceph/rbd/deploy/
+NAMESPACE=kube-system
+sed -r -i "s/namespace: [^ ]+/namespace: $NAMESPACE/g" ./rbac/clusterrolebinding.yaml ./rbac/rolebinding.yaml
+
+kubectl -n $NAMESPACE apply -f ./rbac
+
+******************************** 
+ На каждой ноде Workers
+ sestatus
+SELinux status:                 enabled (надо disabled)
+SELinuxfs mount:                /sys/fs/selinux
+SELinux root directory:         /etc/selinux
+Loaded policy name:             targeted
+Current mode:                   permissive
+Mode from config file:          permissive
+Policy MLS status:              enabled
+Policy deny_unknown status:     allowed
+Max kernel policy version:      31
+
+/etc/selinux/config
+выставить все в disabled
+перезагрузиться
+sudo shutdown -r now
+
+Поставить пакет ceph common
+
+*********************************
+
+*********************************
+
+Создаем storageclass
+
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: ceph-rbd
+provisioner: ceph.com/rbd
+parameters:
+  monitors: 10.73.88.52:6789, 10.73.88.53:6789, 10.73.88.54:6789
+  pool: kube
+  adminId: admin
+  adminSecretNamespace: kube-system
+  adminSecretName: ceph-admin-secret
+  userId: kube
+  userSecretNamespace: kube-system
+  userSecretName: ceph-secret
+  imageFormat: "2"
+  imageFeatures: layering
+
+
+Создаем PV и PVC
+
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: claim1
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ceph-rbd
+  resources:
+    requests:
+      storage: 1Gi
+	  
+Создаем POD (создается файл /mnt/test.txt и пишется в него "Hello world")
+
+kind: Pod
+apiVersion: v1
+metadata:
+  name: create-file-pod
+spec:
+  containers:
+  - name: test-pod
+    image: gcr.io/google_containers/busybox:1.24
+    command:
+    - "/bin/sh"
+    args:
+    - "-c"
+    - "echo Hello world! > /mnt/test.txt && exit 0 || exit 1"
+    volumeMounts:
+    - name: pvc
+      mountPath: "/mnt"
+  restartPolicy: "Never"
+  volumes:
+  - name: pvc
+    persistentVolumeClaim:
+      claimName: claim1
+
+Заходим смотрим 
+kubectl exec test-pod -ti sh
+
+Или через второй под
+
+kind: Pod
+apiVersion: v1
+metadata:
+  name: test-pod
+spec:
+  containers:
+  - name: test-pod
+    image: gcr.io/google_containers/busybox:1.24
+    command:
+    - "/bin/sh"
+    args:
+    - "-c"
+    - "sleep 600"
+    volumeMounts:
+    - name: pvc
+      mountPath: "/mnt/test"
+  restartPolicy: "Never"
+  volumes:
+  - name: pvc
+    persistentVolumeClaim:
+      claimName: claim1
