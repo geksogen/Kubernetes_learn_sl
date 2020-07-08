@@ -4,4 +4,9 @@
 4) Редактируем под себя inventory
 5) cp site.yml.sample site.yml
 6) ansible-playbook -u root -i inventory/hosts site.yml -b --diff
+
+Удаление Ceph
+1) Копируем git и переходим на ветку
+2) Копируем inventory
 7) ansible-playbook -u root -i inventory/hosts ./infrastructure-playbooks/purge-cluster.yml
+8) Отключаем диски ceph
