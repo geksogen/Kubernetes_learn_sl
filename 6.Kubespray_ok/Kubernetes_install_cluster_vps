@@ -39,3 +39,6 @@ sh _deplouy_cluster.sh root
 
 удаление кластера
 ansible-playbook -i inventory/root/inventory.ini reset.yml
+
+Добавление метки на узел ingress, для того что бы поды deamonset (с меткой) поднялись на нем
+kubectl label node ingress-1.root.local.io node-role.kubernetes.io/ingress=
