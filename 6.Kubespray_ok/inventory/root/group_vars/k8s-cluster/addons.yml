@@ -4,7 +4,7 @@
 dashboard_enabled: true
 
 # Helm deployment
-helm_enabled: false
+helm_enabled: true
 
 # Registry deployment
 registry_enabled: false
@@ -13,7 +13,7 @@ registry_enabled: false
 # registry_disk_size: "10Gi"
 
 # Metrics Server deployment
-metrics_server_enabled: false
+metrics_server_enabled: true
 # metrics_server_kubelet_insecure_tls: true
 # metrics_server_metric_resolution: 60s
 # metrics_server_kubelet_preferred_address_types: "InternalIP"
@@ -87,18 +87,18 @@ ingress_nginx_nodeselector:
 ingress_nginx_tolerations:
   - key: "node-role.kubernetes.io/ingress"
     operator: "Exists"
-# ingress_nginx_namespace: "ingress-nginx"
-# ingress_nginx_insecure_port: 80
-# ingress_nginx_secure_port: 443
+ingress_nginx_namespace: "ingress-nginx"
+ingress_nginx_insecure_port: 80
+ingress_nginx_secure_port: 443
 ingress_nginx_configmap:
   server-tokens: "False"
   proxy-body-size: "2048M"
   proxy-buffer-size: "16k"
   worker-shutdown-timeout: "180"
-# ingress_nginx_configmap_tcp_services:
-#   9000: "default/example-go:8080"
-# ingress_nginx_configmap_udp_services:
-#   53: "kube-system/kube-dns:53"
+ingress_nginx_configmap_tcp_services:
+   9000: "default/example-go:8080"
+ingress_nginx_configmap_udp_services:
+   53: "kube-system/kube-dns:53"
 
 # ALB ingress controller deployment
 ingress_alb_enabled: false
