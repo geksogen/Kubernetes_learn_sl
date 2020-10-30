@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: elastalert
+  labels:
+    app: elasticalert
+spec:
+  containers:
+  - image: bitsensor/elastalert:2.0.0
+    name: elastalert-container
+    volumeMounts:
+    - mountPath: /opt/elastalert/config.yaml
+      name: conf-volume
+    - mountPath: /opt/elastalert-server/config/config.json
+      name: conf2-volume
+    - mountPath: /opt/elastalert-server/config/config-test.yaml
+      name: conf-test-volume
+    - mountPath: /opt/elastalert/rule_templates
+      name: rules-tmpl-volume
+    - mountPath: /opt/elastalert/smtp.yaml
+      name: smtp-conf
+  volumes:
+  - name: conf-volume
+    hostPath:
+      path: /srv/slurm/15.Logging/elastalert/config/elastalert.yaml
+      type: File
+  - name: conf2-volume
+    hostPath:
+      path: /srv/slurm/15.Logging/elastalert/config/config.json
+      type: File
+  - name: conf-test-volume
+    hostPath:
+      path: /srv/slurm/15.Logging/elastalert/config/elastalert-test.yaml
+      type: File
+  - name: rules-tmpl-volume
+    hostPath:
+      path: /srv/slurm/15.Logging/elastalert/rule_templates
+      type: Directory
+  - name: smtp-conf
+    hostPath:
+      path: /srv/slurm/15.Logging/elastalert/smtp.yaml
+      type: File
+  nodeSelector:
+    kubernetes.io/hostname: node-2.s<свой номер логина>.slurm.io
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticalert
+spec:
+  selector:
+    app: elasticalert
+  ports:
+    - protocol: TCP
+      port: 3030
+      targetPort: 3030

@@ -1,0 +1,1 @@
+kubectl label node ingress-1.root.local.io node-role.kubernetes.io/ingress=

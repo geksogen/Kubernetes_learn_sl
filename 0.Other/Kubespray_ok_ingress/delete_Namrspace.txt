@@ -1,0 +1,15 @@
+***************************************************************************************
+
+удаление Namespace!!!!
+
+kubectl get namespace <YOUR_NAMESPACE> -o json > <YOUR_NAMESPACE>.json
+kubectl replace --raw "/api/v1/namespaces/<YOUR_NAMESPACE>/finalize" -f <YOUR_NAMESPACE>.json
+edit the file tmp.json and remove the finalizers
+
+    }, "spec": { "finalizers": [ "kubernetes" ] },
+
+after editing it should look like this
+
+    }, "spec": { "finalizers": [ ] },
+
+****************************************************************************************

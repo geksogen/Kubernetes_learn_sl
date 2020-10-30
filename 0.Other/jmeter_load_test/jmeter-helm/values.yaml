@@ -1,0 +1,67 @@
+imageCredentials:
+  registry: docker.com
+  #pullSecrets: docker-registry-secrets
+  # username: docker_user
+  # password: docker_user_password
+# docker image for master and slaves
+images:
+  master:
+    repo: kaarol/jmeter-master
+    tag: latest
+    pullPolicy: Always
+  slave:
+    repo: kaarol/jmeter-slave
+    tag: latest
+    pullPolicy: Always
+
+annotations: {}
+
+config:
+  disableSSL: true
+  master:
+    #testsConfigMap: jmeter-test
+    replicaCount: 1
+    restartPolicy: Always
+    oneShotTest: false
+  slaves:
+    replicaCount: 2
+    restartPolicy: Always
+
+labels: {}
+
+influxdb:
+  enabled: true
+  config:
+    graphite:
+      enabled: true
+      bind_address: 2003
+      database: jmeter
+  env:
+  - name: INFLUXDB_DB
+    value: "jmeter"
+  persistence:
+    enabled: false
+    # storageClass: "-"
+    size: 2Gi
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 0.1
+    limits:
+      memory: 2Gi
+      cpu: 1
+grafana:
+  enabled: true
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: jmeter-influxdb
+          type: influxdb
+          #This should be tempalte base on Release.name but this would be support in helm version 3 with Lua.
+          #This value should be changed http://{{Release.name}}-influxdb:8086
+          url: "http://test-influxdb:8086"
+          database: "jmeter"
+          access: proxy
+          isDefault: true
+

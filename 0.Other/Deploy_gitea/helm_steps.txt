@@ -1,0 +1,6 @@
+helm repo add keyporttech https://keyporttech.github.io/helm-charts/
+helm show values keyporttech/gitea > values.yaml
+helm install gitea keyporttech/gitea -f values.yaml --namespace gitea
+
+helm -n gitea list -a
+helm uninstall -n gitea gitea
